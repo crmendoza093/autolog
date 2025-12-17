@@ -1,0 +1,30 @@
+<div id="service-form">
+  <%= form_with(model: Service.new,
+    url: services_path,
+    class: "service-form") do |f| %>
+    <div class="form-row">
+      <div class="form-field">
+        <label for="service_name">Nombre del servicio</label>
+        <%= f.text_field :name,
+          placeholder: "Ej: Lavado completo",
+          class: "input-field",
+          required: true %>
+      </div>
+      <div class="form-field">
+        <label for="service_price">Precio sugerido</label>
+        <div class="input-with-prefix">
+          <span class="prefix">$</span>
+          <%= f.number_field :price,
+            placeholder: "35000",
+            class: "input-field",
+            min: 0,
+            required: true %>
+        </div>
+      </div>
+      <div class="form-field form-field-button">
+        <label>&nbsp;</label>
+        <%= f.submit "Agregar", class: "btn-primary" %>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,677 @@
+<div class="chat-container" data-controller="chat" id="chat-container" data-services="<%= @services.map(&:name).to_json %>">
+  <!-- Header -->
+  <header class="chat-header">
+    <div class="header-left">
+      <div class="shop-avatar">
+        <%= current_shop.name[0].upcase %>
+      </div>
+      <div class="header-info">
+        <h1>Registro Diario</h1>
+        <p class="shop-name"><%= current_shop.name %></p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <%= link_to services_path, class: "btn-icon", style: "background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);", title: "Gestionar acciones rápidas" do %>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      <% end %>
+      <%= button_to logout_path, method: :delete, class: "btn-icon btn-logout", title: "Cerrar sesión" do %>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      <% end %>
+    </div>
+  </header>
+
+  <% if @services.any? %>
+  <!-- Top 5 Services Pills -->
+  <section class="top-services-section">
+    <div class="top-services-scroll">
+      <div class="top-services-list">
+        <% @services.each_with_index do |service, index| %>
+          <button class="top-service-pill btn-use-service" 
+                  data-service-id="<%= service.id %>"
+                  data-service-name="<%= service.name %>"
+                  data-service-price="<%= service.price.to_i %>">
+            <span class="pill-rank">#<%= index + 1 %></span>
+            <div class="pill-info">
+              <div class="pill-name"><%= service.name %></div>
+              <div class="pill-meta">$<%= number_with_delimiter(service.price.to_i) %></div>
+            </div>
+            <span class="pill-action">⚡</span>
+          </button>
+        <% end %>
+      </div>
+    </div>
+  </section>
+  <% end %>
+
+  <!-- Messages Container -->
+  <div class="messages-container" id="messages-scroll" data-chat-target="messages">
+    <div id="messages">
+      <!-- Welcome Message -->
+      <div class="message assistant">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <div class="message-bubble">
+            <strong>¡Hola! 👋</strong><br>
+            Escribe el servicio que realizaste, por ejemplo:<br>
+            <em>"Lavado completo $35.000 ABC123 Juan"</em>
+          </div>
+        </div>
+      </div>
+
+      <% if @messages.any? %>
+        <div class="recent-divider">
+          <span>Conversación de hoy</span>
+        </div>
+        
+        <% @messages.each do |message| %>
+          <div class="message <%= message['role'] %>">
+            <div class="message-avatar"><%= message['role'] == 'user' ? '👤' : '🤖' %></div>
+            <div class="message-content">
+              <div class="message-bubble">
+                <%= message['content'].html_safe %>
+              </div>
+              <div class="message-time">
+                <%= Time.parse(message['timestamp']).strftime('%H:%M') rescue '' %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <%= render "chat/input_form" %>
+</div>
+
+<script>
+  // Chat form handler - vanilla JavaScript, no dependencies
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('message-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const messagesContainer = document.getElementById('messages');
+    const scrollContainer = document.getElementById('messages-scroll');
+    
+    // Ghost hint elements
+    const ghostClient = document.getElementById('ghost-client');
+    const ghostService = document.getElementById('ghost-service');
+    const ghostPrice = document.getElementById('ghost-price');
+    const ghostPlate = document.getElementById('ghost-plate');
+
+    // Quick Service Registration Handlers
+    document.querySelectorAll('.btn-use-service').forEach(button => {
+      button.addEventListener('click', async function() {
+        const serviceId = this.dataset.serviceId;
+        const serviceName = this.dataset.serviceName;
+        const servicePrice = this.dataset.servicePrice;
+        
+        // Disable button and show loading state
+        this.disabled = true;
+        this.classList.add('loading');
+        
+        // Store original content
+        const pillName = this.querySelector('.pill-name');
+        const pillMeta = this.querySelector('.pill-meta');
+        const pillAction = this.querySelector('.pill-action');
+        const originalName = pillName.textContent;
+        const originalMeta = pillMeta.textContent;
+        const originalAction = pillAction.textContent;
+        
+        // Show loading state
+        pillName.textContent = 'Registrando...';
+        pillMeta.textContent = '';
+        pillAction.textContent = '⏳';
+        
+        try {
+          const response = await fetch('/chat/quick_register_service', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ service_id: serviceId })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.success) {
+            // Show success message in chat
+            appendMessage('assistant', data.message);
+            
+            // Scroll to bottom
+            scrollToBottom();
+            
+            // Visual feedback on button
+            pillAction.textContent = '✅';
+            setTimeout(() => {
+              pillName.textContent = originalName;
+              pillMeta.textContent = originalMeta;
+              pillAction.textContent = originalAction;
+              this.disabled = false;
+              this.classList.remove('loading');
+            }, 1500);
+          } else {
+            appendMessage('assistant', `❌ Error: ${data.error || 'No se pudo registrar el servicio'}`);
+            // Restore original state
+            pillName.textContent = originalName;
+            pillMeta.textContent = originalMeta;
+            pillAction.textContent = originalAction;
+            this.disabled = false;
+            this.classList.remove('loading');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          appendMessage('assistant', '❌ Error de conexión. Verifica tu conexión a internet.');
+          // Restore original state
+          pillName.textContent = originalName;
+          pillMeta.textContent = originalMeta;
+          pillAction.textContent = originalAction;
+          this.disabled = false;
+          this.classList.remove('loading');
+        }
+      });
+    });
+
+
+    // Auto-resize textarea
+    function autoResize() {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+
+    // Parse message in real-time
+    function parseMessage(text) {
+      const parsed = {
+        client: null,
+        service: null,
+        price: null,
+        plate: null
+      };
+
+      if (!text.trim()) return parsed;
+
+      // Check for structured format (Cliente: X | Servicio: Y | ...)
+      if (text.includes('|')) {
+        const parts = text.split('|').map(p => p.trim());
+        parts.forEach(part => {
+          if (/cliente:\s*(.+)/i.test(part)) {
+            parsed.client = RegExp.$1.trim();
+          } else if (/servicio:\s*(.+)/i.test(part)) {
+            parsed.service = RegExp.$1.trim();
+          } else if (/precio:\s*(.+)/i.test(part)) {
+            parsed.price = RegExp.$1.trim();
+          } else if (/placa:\s*(.+)/i.test(part)) {
+            parsed.plate = RegExp.$1.trim().toUpperCase();
+          }
+        });
+      } else {
+        // Natural language parsing (simplified)
+        // Extract plate FIRST (ABC123 format) - before price to avoid confusion
+        const plateMatch = text.match(/\b([A-Z]{3}[-\s]?\d{3})\b/i);
+        if (plateMatch) {
+          parsed.plate = plateMatch[1].toUpperCase().replace(/[-\s]/g, '');
+        }
+
+        // Extract price - REQUIRE $ symbol to avoid confusion with plate numbers
+        const priceMatch = text.match(/\$\s*([\d.,]+)(?:\s*(?:mil|k))?/i);
+        if (priceMatch) {
+          let price = priceMatch[1].replace(/[.,]/g, '');
+          // Handle "35k" or "35mil" notation
+          if (/\$\s*[\d.,]+\s*(?:mil|k)/i.test(text) && parseInt(price) < 1000) {
+            price = parseInt(price) * 1000;
+          }
+          parsed.price = '$' + price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // Extract service
+        // 1. Priority: Check if explicitly selected service is present in text
+        if (selectedServiceName && text.toLowerCase().includes(selectedServiceName.toLowerCase())) {
+          parsed.service = selectedServiceName;
+        } else {
+          // 2. Fallback: Check dynamic services from database
+          const chatContainer = document.getElementById('chat-container');
+          const dbServices = JSON.parse(chatContainer.dataset.services || '[]');
+          // Sort by length desc to match "Lavado de motor" before "Lavado"
+          const sortedServices = dbServices.sort((a, b) => b.length - a.length);
+          
+          const lowerText = text.toLowerCase();
+          
+          for (const serviceName of sortedServices) {
+            if (lowerText.includes(serviceName.toLowerCase())) {
+              parsed.service = serviceName;
+              break;
+            }
+          }
+        }
+
+        // Extract client name (words that aren't service/price/plate)
+        let remaining = text;
+        if (parsed.price) remaining = remaining.replace(/\$\s*[\d.,]+(?:\s*(?:mil|k))?/gi, '');
+        if (parsed.plate) remaining = remaining.replace(/\b[A-Z]{3}[-\s]?\d{3}\b/gi, '');
+        
+        // Remove known services using the same sorted list
+        const chatContainer = document.getElementById('chat-container');
+        const dbServices = JSON.parse(chatContainer.dataset.services || '[]');
+        const sortedServices = dbServices.sort((a, b) => b.length - a.length);
+        
+        sortedServices.forEach(serviceName => {
+          remaining = remaining.replace(new RegExp(serviceName, 'gi'), '');
+        });
+        
+        // Filter out common stopwords and prepositions
+        const stopwords = ['de', 'la', 'el', 'los', 'las', 'un', 'una', 'del', 'al', 'para', 'con', 'por', 'valor', 'vino', 'trajo', 'llego', 'pidio'];
+        const words = remaining.trim().split(/\s+/).filter(w => {
+          const lower = w.toLowerCase();
+          return w.length > 2 && !stopwords.includes(lower);
+        });
+        
+        if (words.length > 0) {
+          parsed.client = words.slice(0, 2).map(w => 
+            w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+          ).join(' ');
+        }
+      }
+
+      return parsed;
+    }
+
+    // Update ghost hint
+    function updateGhostHint() {
+      const text = input.value;
+      const parsed = parseMessage(text);
+
+      // Update client
+      if (parsed.client) {
+        ghostClient.textContent = parsed.client;
+        ghostClient.classList.add('filled');
+      } else {
+        ghostClient.textContent = '-';
+        ghostClient.classList.remove('filled');
+      }
+
+      // Update service
+      if (parsed.service) {
+        ghostService.textContent = parsed.service;
+        ghostService.classList.add('filled');
+      } else {
+        ghostService.textContent = '-';
+        ghostService.classList.remove('filled');
+      }
+
+      // Update price
+      if (parsed.price) {
+        ghostPrice.textContent = parsed.price;
+        ghostPrice.classList.add('filled');
+      } else {
+        ghostPrice.textContent = '-';
+        ghostPrice.classList.remove('filled');
+      }
+
+      // Update plate
+      if (parsed.plate) {
+        ghostPlate.textContent = parsed.plate;
+        ghostPlate.classList.add('filled');
+      } else {
+        ghostPlate.textContent = '-';
+        ghostPlate.classList.remove('filled');
+      }
+
+      // Enable/disable submit button based on required fields
+      const isComplete = parsed.service && parsed.price;
+      submitBtn.disabled = !isComplete;
+      
+      // Debug: Log parsed data
+      console.log('Parsed client:', parsed.client, 'service:', parsed.service, 'selectedService:', selectedServiceName);
+      
+      // Trigger client autocomplete if we have a potential client name
+      // BUT NOT if it exactly matches the previously selected client
+      if (parsed.client && 
+          parsed.client.length >= 2 && 
+          parsed.client !== selectedClientName &&
+          !parsed.service) { // Only show client autocomplete if no service yet
+        console.log('Triggering client autocomplete for:', parsed.client);
+        searchClients(parsed.client);
+      }
+      // Trigger service autocomplete if we have a potential service name
+      // BUT NOT if it exactly matches the previously selected service
+      else if (parsed.service && 
+               parsed.service.length >= 2 && 
+               parsed.service !== selectedServiceName) {
+        console.log('Triggering service autocomplete for:', parsed.service);
+        searchServices(parsed.service);
+      } else {
+        console.log('Hiding autocomplete - service matches selected');
+        hideAutocomplete();
+      }
+    }
+
+    // Client autocomplete
+    const autocompleteDropdown = document.getElementById('client-autocomplete');
+    let autocompleteTimeout;
+    let selectedClientIndex = -1;
+    let autocompleteClients = [];
+    let justSelectedClient = false; // Flag to prevent re-showing after selection
+    let selectedClientName = null; // Track the selected client name
+    let selectedServiceName = null; // Track the selected service name
+    let autocompleteType = null; // 'client' or 'service'
+
+    function searchClients(query) {
+      clearTimeout(autocompleteTimeout);
+      
+      console.log('searchClients called with:', query);
+      
+      autocompleteTimeout = setTimeout(async () => {
+        try {
+          console.log('Fetching clients for:', query);
+          const response = await fetch(`/chat/search_clients?q=${encodeURIComponent(query)}`);
+          const data = await response.json();
+          
+          console.log('API response:', data);
+          
+          if (data.clients && data.clients.length > 0 && !justSelectedClient) {
+            autocompleteClients = data.clients;
+            autocompleteType = 'client';
+            showAutocomplete(data.clients, 'client');
+          } else {
+            console.log('No clients found');
+            hideAutocomplete();
+          }
+        } catch (error) {
+          console.error('Error searching clients:', error);
+          hideAutocomplete();
+        }
+      }, 300); // Debounce 300ms
+    }
+
+    function searchServices(query) {
+      clearTimeout(autocompleteTimeout);
+      
+      console.log('searchServices called with:', query);
+      
+      autocompleteTimeout = setTimeout(async () => {
+        try {
+          console.log('Fetching services for:', query);
+          const response = await fetch(`/chat/search_services?q=${encodeURIComponent(query)}`);
+          const data = await response.json();
+          
+          console.log('API response:', data);
+          
+          if (data.services && data.services.length > 0) {
+            autocompleteType = 'service';
+            showAutocomplete(data.services, 'service');
+          } else {
+            console.log('No services found');
+            hideAutocomplete();
+          }
+        } catch (error) {
+          console.error('Error searching services:', error);
+          hideAutocomplete();
+        }
+      }, 300); // Debounce 300ms
+    }
+
+    function showAutocomplete(items, type) {
+      console.log('showAutocomplete called with', items.length, type);
+      console.log('Dropdown element:', autocompleteDropdown);
+      
+      selectedClientIndex = -1;
+      
+      if (type === 'client') {
+        autocompleteDropdown.innerHTML = items.map((client, index) => `
+          <div class="autocomplete-item" data-index="${index}" data-type="client" data-value="${client.name}">
+            <span class="autocomplete-icon">👤</span>
+            <span class="autocomplete-name">${client.name}</span>
+          </div>
+        `).join('');
+      } else if (type === 'service') {
+        autocompleteDropdown.innerHTML = items.map((service, index) => `
+          <div class="autocomplete-item" data-index="${index}" data-type="service" data-value="${service.name}">
+            <span class="autocomplete-icon">🔧</span>
+            <span class="autocomplete-name">${service.name}</span>
+          </div>
+        `).join('');
+      }
+      
+      autocompleteDropdown.style.display = 'block';
+      console.log('Dropdown display set to:', autocompleteDropdown.style.display);
+      console.log('Dropdown HTML:', autocompleteDropdown.innerHTML);
+      
+      // Add click handlers
+      autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const type = item.dataset.type;
+          const value = item.dataset.value;
+          if (type === 'client') {
+            selectClient(value);
+          } else if (type === 'service') {
+            selectService(value);
+          }
+        });
+      });
+    }
+
+    function hideAutocomplete() {
+      autocompleteDropdown.style.display = 'none';
+      autocompleteClients = [];
+      selectedClientIndex = -1;
+    }
+
+    function selectClient(clientName) {
+      // Replace client name in input
+      const currentText = input.value;
+      const parsed = parseMessage(currentText);
+      
+      // Replace the parsed client name with the selected one
+      if (parsed.client) {
+        const newText = currentText.replace(new RegExp(parsed.client, 'i'), clientName);
+        input.value = newText;
+      }
+      
+      // Store the selected client name to prevent autocomplete from showing again
+      selectedClientName = clientName;
+      
+      hideAutocomplete();
+      
+      // Set flag to prevent autocomplete from showing again immediately
+      justSelectedClient = true;
+      setTimeout(() => {
+        justSelectedClient = false;
+      }, 500);
+      
+      updateGhostHint();
+      input.focus();
+    }
+
+    function selectService(serviceName) {
+      // Replace service name in input
+      const currentText = input.value;
+      const parsed = parseMessage(currentText);
+      
+      // Replace the parsed service name with the selected one
+      if (parsed.service) {
+        const newText = currentText.replace(new RegExp(parsed.service, 'i'), serviceName);
+        input.value = newText;
+      }
+      
+      // Store the selected service name to prevent autocomplete from showing again
+      selectedServiceName = serviceName;
+      
+      hideAutocomplete();
+      updateGhostHint();
+      input.focus();
+    }
+
+    function highlightAutocompleteItem() {
+      const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+      items.forEach((item, index) => {
+        if (index === selectedClientIndex) {
+          item.classList.add('selected');
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+    }
+
+    // Input event listener
+    input.addEventListener('input', function() {
+      autoResize();
+      updateGhostHint();
+    });
+
+    // Keyboard navigation for autocomplete
+    input.addEventListener('keydown', function(e) {
+      if (autocompleteDropdown.style.display === 'block') {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const maxIndex = autocompleteType === 'client' ? autocompleteClients.length - 1 : 
+                          autocompleteDropdown.querySelectorAll('.autocomplete-item').length - 1;
+          selectedClientIndex = Math.min(selectedClientIndex + 1, maxIndex);
+          highlightAutocompleteItem();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectedClientIndex = Math.max(selectedClientIndex - 1, -1);
+          highlightAutocompleteItem();
+        } else if (e.key === 'Enter' && selectedClientIndex >= 0) {
+          e.preventDefault();
+          const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+          const selectedItem = items[selectedClientIndex];
+          if (selectedItem) {
+            const type = selectedItem.dataset.type;
+            const value = selectedItem.dataset.value;
+            if (type === 'client') {
+              selectClient(value);
+            } else if (type === 'service') {
+              selectService(value);
+            }
+          }
+          return;
+        } else if (e.key === 'Escape') {
+          hideAutocomplete();
+        }
+      }
+      
+      // Original Enter handler
+      if (e.key === 'Enter' && !e.shiftKey && autocompleteDropdown.style.display === 'none') {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = '...';
+
+      // Add user message to UI
+      appendMessage('user', message);
+      
+      // Clear input and reset autocomplete state
+      input.value = '';
+      selectedClientName = null; // Reset for next service
+      selectedServiceName = null; // Reset for next service
+      hideAutocomplete(); // Hide dropdown if visible
+      autoResize();
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ message: message })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          appendMessage('assistant', data.assistant_message, data.action);
+        } else {
+          appendMessage('assistant', '❌ Error al procesar el mensaje. Intenta de nuevo.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        appendMessage('assistant', '❌ Error de conexión. Verifica tu conexión a internet.');
+      } finally {
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.textContent = '➤';
+        input.focus();
+        scrollToBottom();
+      }
+    });
+
+    function appendMessage(role, content, action = null) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      
+      const avatar = role === 'user' ? '👤' : '🤖';
+      const time = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+      
+      // Check if this is a confirmation message
+      const isConfirmation = role === 'assistant' && 
+        (content.includes('¿Es correcto?') || content.includes('Responde *sí* o *no*'));
+      
+      let buttonsHTML = '';
+      if (isConfirmation) {
+        buttonsHTML = `
+          <div class="confirmation-buttons">
+            <button class="btn-confirm" onclick="handleConfirmation('sí', this)">
+              ✓ Sí
+            </button>
+            <button class="btn-confirm" onclick="handleConfirmation('no', this)">
+              ✗ No
+            </button>
+          </div>
+        `;
+      }
+      
+      messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+          <div class="message-bubble">${content}</div>
+          ${buttonsHTML}
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+      
+      messagesContainer.appendChild(messageDiv);
+    }
+
+    // Handle confirmation button clicks
+    window.handleConfirmation = function(response, button) {
+      // Disable all confirmation buttons in this message
+      const buttons = button.parentElement.querySelectorAll('.btn-confirm');
+      buttons.forEach(btn => btn.disabled = true);
+      
+      // Set the input value and submit
+      input.value = response;
+      form.requestSubmit();
+    };
+
+    function scrollToBottom() {
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+
+    // Initial resize
+    autoResize();
+    scrollToBottom();
+  });
+</script>

@@ -1,0 +1,15 @@
+<% action ||= nil %>
+<div class="message <%= role %> <%= "message-#{action}" if action %>" data-chat-target="message">
+  <div class="message-avatar">
+    <% if role == "user" %>👤<% else %>🤖<% end %>
+  </div>
+  <div class="message-content">
+    <div class="message-bubble">
+      <%= raw(content.gsub(/\*\*(.+?)\*\*/, '<strong>\1</strong>').gsub(/\*(.+?)\*/, '<em>\1</em>').gsub("\n", '<br>')) %>
+    </div>
+    <div class="message-time">
+      <%= Time.current.strftime("%H:%M") %>
+    </div>
+  </div>
+</div>
+

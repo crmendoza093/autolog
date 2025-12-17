@@ -1,0 +1,8 @@
+/*
+ * Autolog - Main Stylesheet
+ * Imports modular CSS files for better organization
+ */
+
+@import "variables.css";
+@import "base.css";
+@import "authentication.css";

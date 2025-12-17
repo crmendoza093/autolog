@@ -1,0 +1,11 @@
+<div class="service-summary">
+  <div class="service-icon">✅</div>
+  <div class="service-details">
+    <span class="service-name"><%= service.service_name %></span>
+    <span class="service-meta">
+      <%= service.client&.name || "Cliente" %> · 
+      $<%= number_with_delimiter(service.price.to_i) %>
+    </span>
+  </div>
+  <span class="service-time"><%= service.service_date.strftime("%H:%M") %></span>
+</div>

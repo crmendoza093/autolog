@@ -1,0 +1,22 @@
+<div id="<%= dom_id(suggestion) %>" class="suggestion-item">
+  <div class="suggestion-info">
+    <span class="suggestion-name"><%= suggestion.service_name %></span>
+    <span class="suggestion-price">$<%= number_with_delimiter(suggestion.default_price.to_i) %></span>
+    <span class="suggestion-usage"><%= suggestion.usage_count %> usos</span>
+  </div>
+  <div class="suggestion-actions">
+    <%= link_to quick_action_service_suggestion_path(suggestion),
+      class: "btn-quick-use",
+      title: "Usar ahora",
+      data: { turbo_method: :post } do %>
+      ⚡ Usar
+    <% end %>
+    <%= link_to service_suggestion_path(suggestion),
+      class: "btn-delete",
+      title: "Eliminar",
+      data: { turbo_method: :delete, turbo_confirm: "¿Eliminar esta sugerencia?" } do %>
+      ✕
+    <% end %>
+  </div>
+</div>
+

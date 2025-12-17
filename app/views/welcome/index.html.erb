@@ -1,0 +1,22 @@
+<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 24px;">
+  <div>
+    <h1 style="font-size: 32px; margin-bottom: 16px;">¡Bienvenido, <%= current_shop.name %>!</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 32px;">
+      Login exitoso. La interfaz de chat se implementará en la Fase 2.
+    </p>
+    
+    <div style="background: var(--bg-card); padding: 24px; border-radius: 16px; margin-bottom: 24px;">
+      <h2 style="font-size: 20px; margin-bottom: 16px;">✅ Fase 1 Completada</h2>
+      <ul style="list-style: none; padding: 0; color: var(--text-secondary);">
+        <li>✓ Autenticación con PIN</li>
+        <li>✓ Sesión persistente</li>
+        <li>✓ Sistema de flash messages</li>
+        <li>✓ Design system dark mode</li>
+        <li>✓ Stimulus controllers</li>
+      </ul>
+    </div>
+
+    <%= link_to "Cerrar sesión", logout_path, method: :delete, 
+      style: "display: inline-block; padding: 12px 24px; background: var(--color-danger); color: white; border-radius: 8px; text-decoration: none; font-weight: 600;" %>
+  </div>
+</div>

@@ -1,0 +1,13 @@
+<div class="service-item" id="<%= dom_id(service) %>">
+  <div class="service-info">
+    <div class="service-name"><%= service.name %></div>
+    <div class="service-price">$<%= number_with_delimiter(service.price.to_i) %></div>
+    <div class="service-usage"><%= service.usage_count %> usos</div>
+  </div>
+  <div class="service-actions">
+    <%= button_to "⚡ Registrar", use_service_path(service), method: :post, class: "btn-quick-use", 
+      form: { data: { turbo_confirm: "¿Registrar #{service.name} por $#{number_with_delimiter(service.price.to_i)}?" } } %>
+    <%= button_to "🗑️", service_path(service), method: :delete, class: "btn-delete", 
+      data: { turbo_confirm: "¿Eliminar este servicio?" } %>
+  </div>
+</div>

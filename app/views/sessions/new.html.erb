@@ -1,0 +1,100 @@
+<div class="login-wrapper">
+  <!-- Animated Background -->
+  <div class="background-gradient"></div>
+  <div class="floating-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <!-- Login Card -->
+  <div class="login-card">
+    <!-- Logo with gradient -->
+    <div class="logo-container">
+      <div class="logo-ring"></div>
+      <svg class="logo-icon" width="48" height="48" viewBox="0 0 24 24" fill="none">
+        <path d="M9 17H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v2.5" 
+          stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
+        <rect x="9" y="10" width="12" height="11" rx="2" 
+          stroke="url(#gradient2)" stroke-width="2"/>
+        <path d="M12 14h5M12 17h3" 
+          stroke="url(#gradient3)" stroke-width="2" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="gradient1" x1="5" y1="3" x2="19" y2="17">
+            <stop offset="0%" stop-color="#8B5CF6"/>
+            <stop offset="100%" stop-color="#6366F1"/>
+          </linearGradient>
+          <linearGradient id="gradient2" x1="9" y1="10" x2="21" y2="21">
+            <stop offset="0%" stop-color="#6366F1"/>
+            <stop offset="100%" stop-color="#3B82F6"/>
+          </linearGradient>
+          <linearGradient id="gradient3" x1="12" y1="14" x2="17" y2="17">
+            <stop offset="0%" stop-color="#3B82F6"/>
+            <stop offset="100%" stop-color="#0EA5E9"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Heading -->
+    <div class="login-header">
+      <h1 class="login-title">Daily Services Chat</h1>
+      <p class="login-subtitle">Registra tus servicios de forma simple y rápida</p>
+    </div>
+
+    <!-- Login Form -->
+    <%= form_with url: login_path, 
+      method: :post, 
+      class: "login-form",
+      data: { controller: "pin-input" } do |f| %>
+      
+      <div class="input-group">
+        <div class="input-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M20 7h-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" 
+              stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <%= f.text_field :shop_name, 
+          autofocus: true, 
+          autocomplete: "off",
+          required: true,
+          class: "input-field",
+          placeholder: "Nombre del taller" %>
+        <%= f.label :shop_name, "Taller", class: "input-label" %>
+      </div>
+
+      <div class="input-group">
+        <div class="input-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="11" width="14" height="10" rx="2" 
+              stroke="currentColor" stroke-width="2"/>
+            <path d="M12 15v2M7 11V7a5 5 0 0110 0v4" 
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <%= f.password_field :pin, 
+          maxlength: 4,
+          inputmode: "numeric",
+          pattern: "[0-9]{4}",
+          required: true,
+          autocomplete: "off",
+          class: "input-field",
+          data: { pin_input_target: "field" },
+          placeholder: "PIN de 4 dígitos" %>
+        <%= f.label :pin, "PIN", class: "input-label" %>
+      </div>
+
+      <%= f.submit "Iniciar Sesión", class: "btn-login" %>
+    <% end %>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>¿Primera vez? Contacta al administrador</span>
+    </div>
+  </div>
+</div>

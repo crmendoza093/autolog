@@ -1,0 +1,10 @@
+<%= button_to quick_action_service_suggestion_path(suggestion), 
+  method: :post,
+  class: "suggestion-card",
+  data: { turbo: true },
+  title: "#{suggestion.service_name} - $#{number_with_delimiter(suggestion.default_price.to_i)}" do %>
+  <span class="suggestion-emoji">⚡</span>
+  <span class="suggestion-name"><%= suggestion.service_name %></span>
+  <span class="suggestion-price">$<%= number_with_delimiter(suggestion.default_price.to_i) %></span>
+<% end %>
+
