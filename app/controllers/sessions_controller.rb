@@ -11,6 +11,7 @@ class SessionsController < ApplicationController
 
     if shop&.authenticate_pin(params[:pin])
       session[:shop_id] = shop.id
+      shop.update_column(:last_login_at, Time.current)
       redirect_to root_path, notice: "Bienvenido a #{shop.name}"
     else
       flash.now[:alert] = "PIN o nombre de taller incorrecto"
