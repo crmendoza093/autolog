@@ -21,7 +21,7 @@ gem "jbuilder"
 gem "bcrypt", "~> 3.1.7"
 
 # LLM Integration
-gem "anthropic", "~> 0.3.0"
+gem "anthropic", "~> 1.16.1"
 
 # Redis for caching
 gem "redis", "~> 5.0"
