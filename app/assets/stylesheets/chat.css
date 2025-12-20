@@ -448,13 +448,6 @@
     transform: translateY(0) scale(0.98);
 }
 
-.btn-send:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: linear-gradient(135deg, #64748b, #475569);
-    box-shadow: none;
-}
-
 /* Ghost Hint */
 .ghost-hint {
     display: flex;
