@@ -114,7 +114,7 @@
         const servicePrice = this.dataset.servicePrice;
         
         // Disable button and show loading state
-        this.disabled = true;
+
         this.classList.add('loading');
         
         // Store original content
@@ -156,7 +156,7 @@
               pillName.textContent = originalName;
               pillMeta.textContent = originalMeta;
               pillAction.textContent = originalAction;
-              this.disabled = false;
+
               this.classList.remove('loading');
             }, 1500);
           } else {
@@ -165,7 +165,6 @@
             pillName.textContent = originalName;
             pillMeta.textContent = originalMeta;
             pillAction.textContent = originalAction;
-            this.disabled = false;
             this.classList.remove('loading');
           }
         } catch (error) {
@@ -175,7 +174,7 @@
           pillName.textContent = originalName;
           pillMeta.textContent = originalMeta;
           pillAction.textContent = originalAction;
-          this.disabled = false;
+
           this.classList.remove('loading');
         }
       });
@@ -327,7 +326,7 @@
 
       // Enable/disable submit button based on required fields
       const isComplete = parsed.service && parsed.price;
-      submitBtn.disabled = !isComplete;
+
       
       // Debug: Log parsed data
       console.log('Parsed client:', parsed.client, 'service:', parsed.service, 'selectedService:', selectedServiceName);
@@ -574,7 +573,7 @@
       if (!message) return;
 
       // Disable submit button
-      submitBtn.disabled = true;
+
       submitBtn.textContent = '...';
 
       // Add user message to UI
@@ -609,7 +608,7 @@
         appendMessage('assistant', '❌ Error de conexión. Verifica tu conexión a internet.');
       } finally {
         // Reset button
-        submitBtn.disabled = false;
+
         submitBtn.textContent = '➤';
         input.focus();
         scrollToBottom();
@@ -657,7 +656,7 @@
     window.handleConfirmation = function(response, button) {
       // Disable all confirmation buttons in this message
       const buttons = button.parentElement.querySelectorAll('.btn-confirm');
-      buttons.forEach(btn => btn.disabled = true);
+
       
       // Set the input value and submit
       input.value = response;
