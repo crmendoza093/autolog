@@ -9,7 +9,7 @@ gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 # Import maps for JavaScript modules [https://github.com/rails/importmap-rails]
-gem "importmap-rails", "~> 2.0"
+gem "importmap-rails", "~> 2.2"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
 # Use the Puma web server [https://github.com/puma/puma]
